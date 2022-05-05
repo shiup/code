@@ -17,35 +17,28 @@ from pprint import pprint
 token = os.getenv('GITHUB_TOKEN', '...')
 headers = {'Authorization': f'token {token}',
            'Accept' : 'application/vnd.github.v3+json'}
+filenames = ['package.json', 'package-lock.json', 'composer.json', 'composer.lock']
 
 # from https://github.hal.com/spoon/spoon/issues/6840
 if len(sys.argv) != 2:
   print('Missing the package to look for')
   quit()
 
+def search_individual_package(filename, repo):
+  query_url = f"https://api.github.ibm.com/repos/" + repo + "/contents/" + filename
+  params = {}
+  r = requests.get(query_url, headers=headers, params=params)
+  if r.ok:
+    # jsoncontent = json.loads(base64.b64decode(r.json()['content']).decode('utf-8'))['dependencies']
+    # content = json.dumps(jsoncontent)
+    content = base64.b64decode(r.json()['content']).decode('utf-8')
+    if sys.argv[1] in content:
+      print('[' + filename + '] found: ' + repo)  
+
 def search_package(repos):
   for repo in repos:
-    query_url = f"https://api.github.hal.com/repos/" + repo + "/contents/package.json"
-    params = {}
-    r = requests.get(query_url, headers=headers, params=params)
-    if r.ok:
-      # jsoncontent = json.loads(base64.b64decode(r.json()['content']).decode('utf-8'))['dependencies']
-      # content = json.dumps(jsoncontent)
-      content = base64.b64decode(r.json()['content']).decode('utf-8')
-      if sys.argv[1] in content:
-        print('[package.json] found: ' + repo)
-
-    query_url = f"https://api.github.hal.com/repos/" + repo + "/contents/package-lock.json"
-    params = {}
-    r = requests.get(query_url, headers=headers, params=params)
-    if r.ok:
-      # jsoncontent = json.loads(base64.b64decode(r.json()['content']).decode('utf-8'))['dependencies']
-      # content = json.dumps(jsoncontent)
-      content = base64.b64decode(r.json()['content']).decode('utf-8')
-      if sys.argv[1] in content:
-        print('[package-lock.json] found: ' + repo)
-
-
+    for filename in filenames:
+      search_individual_package(filename, repo)
 
 print('Package: ' +  sys.argv[1])
 
